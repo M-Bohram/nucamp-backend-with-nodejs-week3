@@ -4,11 +4,9 @@ const path = require('path');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const mongoose = require('mongoose');
-
 const session = require('express-session')
 const FileStore = require('session-file-store')(session)
 
-const { authorizeUsers } = require('./auth');
 const config = require('./config')
 
 const url = 'mongodb://localhost:27017/nucampsite';
@@ -19,13 +17,16 @@ const connect = mongoose.connect(url, {
     useUnifiedTopology: true
 });
 
-connect.then(() => console.log('Connected correctly to server'), 
-    err => console.log(err)
+connect.then(
+  () => console.log('Connected correctly to server'), 
+  err => console.log(err)
 );
 
 const indexRouter = require('./routes/index');
 const usersRouter = require('./routes/users');
+
 const noteRouter = require('./routes/noteRouter');
+const { authorizeUsers } = require('./authenticate');
 
 const app = express();
 
@@ -36,7 +37,7 @@ app.set('view engine', 'jade');
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-// app.use(cookieParser(config.SECRET_KEY));
+// app.use(cookieParser('anything'));
 
 app.use(session({
   name: 'session-id',
@@ -51,9 +52,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 
-app.use(authorizeUsers)
-
-app.use('/notes', noteRouter)
+app.use('/notes', authorizeUsers, noteRouter)
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
