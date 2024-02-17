@@ -8,6 +8,7 @@ const session = require('express-session')
 const FileStore = require('session-file-store')(session)
 const passport = require('passport')
 
+const { auth, verifyUser } = require('./authenticate')
 const config = require('./config')
 
 const url = 'mongodb://localhost:27017/nucampsite';
@@ -27,7 +28,6 @@ const indexRouter = require('./routes/index');
 const usersRouter = require('./routes/users');
 
 const noteRouter = require('./routes/noteRouter');
-const { authorizeUsers } = require('./authenticate');
 
 const app = express();
 
@@ -38,7 +38,7 @@ app.set('view engine', 'jade');
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-// app.use(cookieParser('anything'));
+//app.use(cookieParser('anything'));
 
 app.use(session({
   name: 'session-id',
@@ -56,7 +56,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 
-app.use('/notes', authorizeUsers, noteRouter)
+app.use('/notes', auth, noteRouter)
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
